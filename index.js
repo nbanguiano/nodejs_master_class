@@ -11,7 +11,7 @@ const http = require( 'http' ),
       config = require('./config')
       util = require( './libs/utils' ),
       router = require( './libs/router' )
-
+    
 // Generic URL parser
 const urlParser = util.curry(
     ( urlHandler, withQuery, urlString ) => 
@@ -50,7 +50,7 @@ const serverHandler = util.curry(
 
         const data = {
             'path' : path,
-            'queryStringObj' : queryStringObj,
+            'query' : queryStringObj,
             'method' : method,
             'headers' : headers,
             'payload' : buffer
@@ -64,16 +64,14 @@ const serverHandler = util.curry(
             res.writeHead( statusCode )
             res.end( payloadString )
             
-            logger( 'Status code: ', statusCode )
-            logger( 'Payload: ', payloadString )
+            logger( `Status code ${statusCode} >> ${payloadString}` )
         } )
     } )
-
-} )
-( console.log )
-( urlParserWithQuery )
-( new StringDecoder( 'utf-8' ) )
-( router )
+} ) // partially applying stuff below
+( console.log ) // 'logger'
+( urlParserWithQuery ) // 'urlParser'
+( new StringDecoder( 'utf-8' ) ) // 'stringDecoder'
+( router ) // 'router'
 
 // Create and start the HTTP server
 const httpServer = http.createServer( serverHandler )
