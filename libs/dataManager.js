@@ -1,5 +1,5 @@
 /**
- * Data handling library
+ * Data management library
  * Handlers for all CRUD uperatoins (create, read, update, delete)
  */
 
@@ -18,13 +18,10 @@ const openFile = promisify( fs.open ),
       closeFile = promisify( fs.close ),
       unlinkFile = promisify( fs.unlink )
 
-// The actual export
-const dataHandler = {}
-
-dataHandler.baseDir = path.join( __dirname, '/../.data' )
+const baseDir = path.join( __dirname, '/../.data' )
 
 // 'C'RUD
-dataHandler.create = util.curry( ( filePromises, baseDir, dir, file, data, callback ) => {
+const _create = util.curry( ( filePromises, baseDir, dir, file, data, callback ) => {
 
     const stringData = JSON.stringify(data)
 
@@ -42,10 +39,10 @@ dataHandler.create = util.curry( ( filePromises, baseDir, dir, file, data, callb
     .catch( e => callback( 'ERROR: Could not create file. It may already exist.', e ) )
 } )
 ( { 'open' : openFile, 'write' : writeFile, 'close' : closeFile } )
-( dataHandler.baseDir )
+( baseDir )
 
 // C'R'UD
-dataHandler.read = util.curry( ( filePromises, encoding, baseDir, dir, file, callback ) => {
+const _read = util.curry( ( filePromises, encoding, baseDir, dir, file, callback ) => {
 
     filePromises.read( `${baseDir}/${dir}/${file}.json`, encoding )
     .then( data => callback( false, data ) )
@@ -53,10 +50,10 @@ dataHandler.read = util.curry( ( filePromises, encoding, baseDir, dir, file, cal
 } )
 ( { 'read' : readFile } )
 ( g.encoding )
-( dataHandler.baseDir )
+( baseDir )
 
 // CR'U'D
-dataHandler.update = util.curry( ( filePromises, baseDir, dir, file, data, callback ) => {
+const _update = util.curry( ( filePromises, baseDir, dir, file, data, callback ) => {
 
     filePromises.open( `${baseDir}/${dir}/${file}.json`, 'r+' )
     .then( fileDescriptor => {
@@ -76,16 +73,22 @@ dataHandler.update = util.curry( ( filePromises, baseDir, dir, file, data, callb
     .catch( e => callback( 'ERROR: Could not create file. It may not exist.', e ) )
 } )
 ( { 'open' : openFile, 'write' : writeFile, 'truncate' : truncateFile, 'close' : closeFile } )
-( dataHandler.baseDir )
+( baseDir )
 
 // CRU'D'
-dataHandler.delete = util.curry( ( filePromises, baseDir, dir, file, callback ) => {
+const _delete = util.curry( ( filePromises, baseDir, dir, file, callback ) => {
 
     filePromises.unlink( `${baseDir}/${dir}/${file}.json` )
     .then( () => callback( false ) )
     .catch( e => callback( 'ERROR: Could not delete file', e ) )
 } )
 ( { 'unlink' : unlinkFile } )
-( dataHandler.baseDir )
+( baseDir )
 
-module.exports = dataHandler
+// The actual export
+module.exports = {
+    'create' : promisify( _create ),
+    'read' : promisify( _read ),
+    'update' : promisify( _update ),
+    'delete' : promisify( _delete )
+}

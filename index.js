@@ -10,7 +10,8 @@ const http = require( 'http' ),
       StringDecoder = require( 'string_decoder' ).StringDecoder,
       config = require('./config')
       util = require( './libs/utils' ),
-      router = require( './libs/router' )
+      router = require( './libs/router' ),
+      helpers = require( './libs/helpers' )
     
 // Generic URL parser
 const urlParser = util.curry(
@@ -22,38 +23,38 @@ const urlParserWithQuery = urlParser( true )
 
 // Main server handler
 const serverHandler = util.curry(
-    ( logger, urlParser, stringDecoder, router, req, res ) => {
+    ( helpers, req, res ) => {
 
     // Basic request info
     const method = req.method.toUpperCase(),
           headers = req.headers
 
     // Deconstruct the URL into path, and query
-    const parsedUrl = urlParser( req.url ),
+    const parsedUrl = helpers.urlParser( req.url ),
           path = parsedUrl.pathname.replace( /^\/+|\/+$/g, '' ),
           queryStringObj = parsedUrl.query
 
     // Initialize a buffer to get fed the payload from the request
-    let buffer = ''
+    let buffer = '';
     
     // append info to the buffer
-    req.on( 'data', data => buffer += stringDecoder.write( data ) )
+    req.on( 'data', data => buffer += helpers.stringDecoder.write( data ) )
     
     req.on( 'end', () => {    
         // 'close' the buffer
-        buffer += stringDecoder.end()
+        buffer += helpers.stringDecoder.end()
         
         // choose the router handler
-        const handler = typeof( router[ path ] ) !== 'undefined' ?
-            router[path] :
-            router.notFound 
+        const handler = typeof( helpers.router[ path ] ) !== 'undefined' ?
+            helpers.router[ path ] :
+            helpers.router.notFound 
 
         const data = {
             'path' : path,
             'query' : queryStringObj,
             'method' : method,
             'headers' : headers,
-            'payload' : buffer
+            'payload' : helpers.dataHelpers.parseJSONSafe( buffer )
         }
 
         // call the router handler with some defaults
@@ -64,14 +65,15 @@ const serverHandler = util.curry(
             res.writeHead( statusCode )
             res.end( payloadString )
             
-            logger( `Status code ${statusCode} >> ${payloadString}` )
+            helpers.logger( `Status code ${statusCode} >> ${payloadString}` )
         } )
     } )
-} ) // partially applying stuff below
-( console.log ) // 'logger'
-( urlParserWithQuery ) // 'urlParser'
-( new StringDecoder( 'utf-8' ) ) // 'stringDecoder'
-( router ) // 'router'
+} )
+( { 'logger' : console.log, 
+    'urlParser': urlParserWithQuery, 
+    'stringDecoder' : new StringDecoder( 'utf-8' ), 
+    'router' : router,
+    'dataHelpers' : helpers.data } )
 
 // Create and start the HTTP server
 const httpServer = http.createServer( serverHandler )

@@ -7,13 +7,15 @@ const configurations = {}
 configurations.dev = {
     'env' : 'development',
     'httpPort' : 3000,
-    'httpsPort' : 3001
+    'httpsPort' : 3001,
+    'hashSecret' : 'bla'
 }
 
 configurations.prod = {
     'env' : 'production',
     'httpPort' : 80,
-    'httpsPort' : 443
+    'httpsPort' : 443,
+    'hashSecret' : 'blu'
 }
 
 const node_env = 
@@ -22,6 +24,6 @@ const node_env =
 
 const configuration = 
       typeof( configurations[ node_env ] ) === 'object' ? 
-      configurations[ node_env ] : configurations.development
+      configurations[ node_env ] : configurations.dev
 
 module.exports = configuration;
